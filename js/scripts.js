@@ -1,25 +1,63 @@
 
-
-// To get data from the Random User API endpoint.
 let randomUsers = [];
+let currentIndex = 0;
 
+// Make an AJAX call to the random users API
 $.ajax({
-  url: 'https://randomuser.me/api/?results=12',
+  url: 'https://randomuser.me/api/?results=12&inc=name,location,email,picture,cell,dob&nat=us&',
   dataType: 'json',
   success: function(data) {
     randomUsers = data.results;
-    console.log(randomUsers);
-    //console.log(data);
     createGallery(data.results);
-    //createModal(data.results);
+    createSearchForm();
   }
 });
 
-// Get and display 12 random users, and display their image, email, city and state
+// This method will create the DOM elements and append to the serch container
+// It will filter the directory by fullname
+const createSearchForm = () => {
+  $('.search-container').append(
+    `<form action="#" method="get">
+       <input type="search" id="search-input" class="search-input" placeholder="Search...">
+       <input type="submit" value="&#x1F50D;" id="serach-submit" class="search-submit">
+   </form>`
+  )
 
+  // Adding message to DOM when no results are found
+  const messageForNoResults = $(`<h2 id="no-results"> No results found</h2>`);
+  messageForNoResults.hide();
+  $('#gallery').append(messageForNoResults);
+
+  // Event listener for search keyup
+  $('.search-container').on('keyup',(e) => {
+    const searchValue = e.target.value;
+    let searchResults = false;
+    messageForNoResults.hide();
+
+    // Iterate through the cards and show the cards which includes in search
+    $('.card').each(function() {
+      // jqeury reference for the current .card
+      let $this = $(this);
+      const fullName = $this.find('#name')[0].textContent.toLowerCase();
+
+      // If current card includes in the search input, show the card, else hide it.
+      if(fullName.includes(searchValue)) {
+        $this.show();
+        searchResults = true;
+      } else {
+        $this.hide();
+      }
+    })
+    if(!searchResults){
+      messageForNoResults.show();
+    }
+  })
+};
+
+// For the given users create a gallery displaying
+// their image, email, city and state
 const createGallery = (users) => {
   users.forEach((person, index) => {
-    console.log(index);
     const thumbnail = person.picture.large;
     const firstName = person.name.first;
     const lastName = person.name.last;
@@ -41,9 +79,7 @@ const createGallery = (users) => {
     )
 
     $('.card').on('click', (e) => {
-      // console.log(index);
-      // console.log(randomUsers[index])
-      // console.log('something')
+      currentIndex = index;
       createModal(randomUsers[index]);
       // To prevent iterting to the end of the loop
       // This method displays the selected card
@@ -52,6 +88,8 @@ const createGallery = (users) => {
   });
 }
 
+// For a given person display the modal with their picture, name, email,
+// city, state, birthday,phone number, address
 const createModal = (person) => {
   const thumbnail = person.picture.large;
   const firstName = person.name.first;
@@ -81,9 +119,37 @@ const createModal = (person) => {
                 <p class="modal-text">${streetNum} ${streetName}, ${city}, ${state} 97204</p>
                 <p class="modal-text">Birthday:${birthday}</p>
             </div>
+            <div class="modal-btn-container">
+                <button type="button" id="modal-prev" class="modal-prev btn">Prev</button>
+                <button type="button" id="modal-next" class="modal-next btn">Next</button>
+            </div>
         </div>`
       )
-    $(".modal-close-btn").on('click', () => {
-      $(".modal-container").remove();
+
+    // To remove the modal once the close button is clicked
+    $('.modal-close-btn').on('click', () => {
+      $('.modal-container').remove();
     });
+
+    // In order to toggle back and forth between the employees when the
+    // modal window is open we add the below functionality
+    $('.modal-prev').on('click',() => {
+      $('.modal-container').remove();
+      if(currentIndex === 0) {
+        currentIndex = randomUsers.length - 1;
+      } else {
+        currentIndex = currentIndex - 1;
+      }
+      createModal(randomUsers[currentIndex]);
+    })
+
+    $('.modal-next').on('click',() => {
+      $('.modal-container').remove();
+      if(currentIndex === randomUsers.length - 1) {
+        currentIndex = 0;
+      } else {
+        currentIndex = currentIndex + 1;
+      }
+      createModal(randomUsers[currentIndex]);
+    })
 }
