@@ -79,11 +79,12 @@ const createGallery = (users) => {
     )
 
     $('.card').on('click', (e) => {
+      e.preventDefault();
       currentIndex = index;
       createModal(randomUsers[index]);
-      // To prevent iterting to the end of the loop
-      // This method displays the selected card
-      e.stopPropogation();
+      // Prevents other listeners of the same event from being called, hereby
+      // prevent iterating to the end of the loop & display selected index.
+      e.stopImmediatePropagation();
     });
   });
 }
